@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TANK-10 | 対戦型トップダウン戦車アクション</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,700&family=M+PLUS+1p:wght@400;500;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="game-container">
+    <!-- Main Render Canvas -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- 1. LOBBY SCREEN -->
+    <div id="lobby-screen" class="ui-screen active">
+      <div class="lobby-backdrop"></div>
+      <div class="lobby-content">
+        <!-- Header -->
+        <header class="lobby-header">
+          <div class="logo-wrapper">
+            <h1 class="game-logo" id="main-game-logo">TANK-<span>10</span></h1>
+            <p class="tagline">10-PLAYER ONLINE TOP-DOWN BATTLE ROYALE</p>
+          </div>
+
+          <!-- P2P Room & Matching Controls -->
+          <div class="lobby-room-controls">
+            <div class="p2p-badge-box">
+              <span class="p2p-code-label">部屋コード:</span>
+              <span id="display-room-code" class="p2p-code-display">-----</span>
+            </div>
+            <button id="btn-create-p2p-room" class="p2p-host-btn" title="新しい部屋を作る（ホストがサーバーになります）">🛡️ 部屋作成 (サーバー起動)</button>
+            <div class="room-code-group">
+              <div class="code-input-wrapper">
+                <input type="text" id="room-code-input" maxlength="8" placeholder="コード入力" value="">
+                <button id="btn-join-room-code" class="code-action-btn">参加 (JOIN)</button>
+              </div>
+            </div>
+            <button id="btn-copy-invite" class="invite-btn" title="招待リンクをコピー">🔗 招待URLコピー</button>
+            <button id="btn-open-connect-guide" class="mobile-guide-btn" title="スマホ接続・QRコード">📱 スマホQR</button>
+          </div>
+        </header>
+
+        <!-- Main Lobby Grid -->
+        <div class="lobby-main-grid">
+          <!-- Left: Player Customization -->
+          <div class="lobby-card player-setup-card">
+            <h2 class="card-title">🛠️ プレイヤー設定</h2>
+
+            <!-- Name Input -->
+            <div class="form-group">
+              <label for="player-name-input">プレイヤー名</label>
+              <input type="text" id="player-name-input" maxlength="16" placeholder="Player 1" value="Player 1">
+            </div>
+
+            <!-- Tank Selection -->
+            <div class="tank-selector-section">
+              <label>戦車タイプ選択（全5種）</label>
+              <div class="tank-type-tabs" id="tank-tabs">
+                <button class="tank-tab-btn active" data-type="standard">
+                  <span class="tab-color-dot" style="background: #22c55e;"></span>
+                  スタンダード
+                </button>
+                <button class="tank-tab-btn" data-type="assault">
+                  <span class="tab-color-dot" style="background: #eab308;"></span>
+                  アサルト
+                </button>
+                <button class="tank-tab-btn" data-type="heavy">
+                  <span class="tab-color-dot" style="background: #3b82f6;"></span>
+                  ヘビー
+                </button>
+                <button class="tank-tab-btn" data-type="sniper">
+                  <span class="tab-color-dot" style="background: #a855f7;"></span>
+                  スナイパー
+                </button>
+                <button class="tank-tab-btn" data-type="breaker">
+                  <span class="tab-color-dot" style="background: #ef4444;"></span>
+                  ブレイカー
+                </button>
+                <!-- Secret Tank (Unlocked via secret chord) -->
+                <button class="tank-tab-btn secret-tank-tab" id="tab-phantom" data-type="phantom" style="display: none;">
+                  <span class="tab-color-dot" style="background: #f59e0b;"></span>
+                  ⭐ ファントム (SECRET)
+                </button>
+              </div>
+
+              <!-- Selected Tank Specs Preview -->
+              <div class="tank-spec-preview" id="tank-spec-preview">
+                <div class="spec-header">
+                  <h3 id="spec-name" style="color: #22c55e;">1. スタンダード</h3>
+                  <span id="spec-desc">クセのない万能型</span>
+                </div>
+                <div class="spec-bars">
+                  <div class="spec-row">
+                    <span class="spec-label">移動速度</span>
+                    <div class="bar-bg"><div class="bar-fill" id="bar-speed" style="width: 60%;"></div></div>
+                  </div>
+                  <div class="spec-row">
+                    <span class="spec-label">耐久 HP</span>
+                    <div class="bar-bg"><div class="bar-fill" id="bar-hp" style="width: 60%;"></div></div>
+                  </div>
+                  <div class="spec-row">
+                    <span class="spec-label">攻撃威力</span>
+                    <div class="bar-bg"><div class="bar-fill" id="bar-power" style="width: 60%;"></div></div>
+                  </div>
+                  <div class="spec-row">
+                    <span class="spec-label">連射性能</span>
+                    <div class="bar-bg"><div class="bar-fill" id="bar-rate" style="width: 60%;"></div></div>
+                  </div>
+                  <div class="spec-row">
+                    <span class="spec-label">射程/弾速</span>
+                    <div class="bar-bg"><div class="bar-fill" id="bar-range" style="width: 60%;"></div></div>
+                  </div>
+                </div>
+                <div class="spec-special" id="spec-special">
+                  ⚡ 特徴: バランス型・安定した取り回し
+                </div>
+              </div>
+            </div>
+
+            <!-- Host Mode Toggle -->
+            <div class="form-group host-role-group" id="host-role-wrapper">
+              <label>参加モード切替</label>
+              <div class="mode-toggle-group">
+                <button class="mode-btn active" id="btn-mode-player">⚔️ プレイヤーとして参戦</button>
+                <button class="mode-btn" id="btn-mode-spectator">👁️ 観戦専用モード</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Players List (Up to 20 Slots) & Host Controls -->
+          <div class="lobby-card players-list-card">
+            <div class="card-header-flex">
+              <h2 class="card-title">👥 参加者 (<span id="player-count">1</span>/20)</h2>
+              <div class="map-badge" id="lobby-map-size-badge">🗺️ MAP: 64x64</div>
+              <div class="host-badge-indicator" id="host-tag">HOST CONTROL</div>
+            </div>
+
+            <!-- Mode Selector (Solo vs Duo) -->
+            <div class="game-mode-wrapper" id="game-mode-wrapper">
+              <span class="mode-select-label">🎮 ゲームルール:</span>
+              <div class="mode-pill-group">
+                <button class="mode-pill active" id="btn-select-solo">⚔️ 個人戦 (SOLO)</button>
+                <button class="mode-pill" id="btn-select-duo">🛡️ チーム戦 (DUO)</button>
+              </div>
+            </div>
+
+            <!-- 20 Slots Container (Scrollable Grid) -->
+            <div class="player-slots-grid" id="player-slots-container">
+              <!-- Dynamically generated slots -->
+            </div>
+
+            <!-- Host Action Controls -->
+            <div class="host-controls-panel" id="host-controls">
+              <!-- Bot Count Adjuster -->
+              <div class="bot-adjust-bar">
+                <div class="bot-status-indicator" id="bot-status-box">
+                  <span class="bot-adjust-label">🤖 Bot数: <b id="current-bot-display" style="color: var(--accent-cyan); font-size: 1.1rem;">0</b></span>
+                </div>
+                <div class="stepper-box">
+                  <button class="stepper-btn" id="btn-bot-dec" title="Botを1体減らす">−1</button>
+                  <button class="stepper-btn" id="btn-bot-inc" title="Botを1体増やす">＋1</button>
+                  <button class="action-btn secondary-btn mini-btn" id="btn-fill-10" title="Botを10人に補充 (標準マップ)">10人</button>
+                  <button class="action-btn secondary-btn mini-btn" id="btn-fill-20" title="Botを20人(MAX)に補充 (大規模マップ)">MAX (20)</button>
+                  <button class="action-btn danger-btn mini-btn" id="btn-remove-bots" title="すべてのボットを削除">🗑️ 全消去</button>
+                </div>
+              </div>
+
+              <!-- Quick Match Presets & Bot Type Config -->
+              <div class="host-extra-actions-bar">
+                <button class="action-btn special-preset-btn" id="btn-host-vs-bots" title="ホスト1人(青) vs ボット19人(赤) の防衛戦をワンクリック設定！">
+                  👑 1 vs 19 (ホスト対全ボット)
+                </button>
+                <div class="bot-type-bulk-box">
+                  <span class="bulk-label">🤖 Bot戦車:</span>
+                  <select id="select-all-bots-type" class="mini-type-select" title="すべてのBotの戦車タイプを一括変更">
+                    <option value="" selected>変更なし</option>
+                    <option value="standard">スタンダード</option>
+                    <option value="assault">アサルト</option>
+                    <option value="heavy">ヘビー</option>
+                    <option value="sniper">スナイパー</option>
+                    <option value="breaker">ブレイカー</option>
+                  </select>
+                </div>
+                <!-- God Bot active indicator/cancel button (hidden unless activated via secret chord) -->
+                <button class="action-btn god-mode-btn" id="btn-toggle-god-bot" style="display: none;" title="最強モード解除">
+                  ⚠️ 最強Bot稼働中 (クリックで解除)
+                </button>
+              </div>
+
+              <button class="action-btn primary-btn start-game-btn" id="btn-start-game">
+                🚀 ゲームスタート (START)
+              </button>
+            </div>
+
+            <div class="non-host-msg" id="non-host-msg">
+              ⏳ ホストがゲームルールを設定・開始するのを待機しています...
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Buttons -->
+        <footer class="lobby-footer">
+          <button class="icon-text-btn" id="btn-open-options">⚙️ OPTIONS (操作設定)</button>
+          <div class="quick-instructions">
+            <span>PC操作: <b>WASD</b> 移動 / <b>マウス</b> 照準 / <b>クリック</b> 発射</span>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <!-- 2. IN-GAME HUD -->
+    <div id="game-hud" class="ui-screen">
+      <!-- Top Center: Match Timer & Remaining Tanks -->
+      <div class="hud-top-center">
+        <div class="timer-box">
+          <span class="timer-icon">⏱️</span>
+          <span id="match-timer-text">05:00</span>
+        </div>
+        <div class="survivors-box">
+          <span class="survivor-icon">🛡️</span>
+          <span id="survivors-count-text">ALIVE: 10 / 10</span>
+        </div>
+      </div>
+
+      <!-- Top Left: Player Status Bar -->
+      <div class="hud-top-left" id="my-tank-hud">
+        <div class="player-tank-badge">
+          <div class="tank-type-icon" id="hud-type-icon">STD</div>
+          <div class="player-info-meta">
+            <div class="player-name-line">
+              <span id="hud-player-name">Player 1</span>
+              <span class="hud-kills-badge" id="hud-kills">0 KILLS</span>
+            </div>
+            <div class="hp-bar-container">
+              <div class="hp-bar-fill" id="hud-hp-bar" style="width: 100%;"></div>
+              <span class="hp-text" id="hud-hp-text">100 / 100</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Right: Minimap Radar -->
+      <div class="hud-top-right">
+        <div class="minimap-container">
+          <div class="minimap-title">RADAR (64x64)</div>
+          <canvas id="minimap-canvas" width="160" height="160"></canvas>
+        </div>
+      </div>
+
+      <!-- Bottom Left: Quick Options / Sound Mute / Host Force Stop -->
+      <div class="hud-bottom-left">
+        <button class="hud-circle-btn" id="hud-btn-sound" title="サウンド切替">🔊</button>
+        <button class="hud-circle-btn" id="hud-btn-options" title="設定">⚙️</button>
+        <button class="hud-pill-btn danger-pill-btn" id="hud-btn-force-end" title="試合を強制終了（ホスト専用）" style="display:none;">⏹️ 試合終了</button>
+      </div>
+
+      <!-- Center Big Announcement (Countdown / Victory) -->
+      <div id="announcement-overlay" class="announcement-overlay">
+        <h1 id="announcement-title">3</h1>
+      </div>
+
+      <!-- Kill Feed (Top Right below minimap) -->
+      <div class="kill-feed-container" id="kill-feed"></div>
+
+      <!-- Spectator Overlay Bar (Shown when dead or in spectator mode) -->
+      <div id="spectator-bar" class="spectator-bar">
+        <div class="spectator-tag">👁️ 観戦モード</div>
+        
+        <!-- View Mode Switcher -->
+        <div class="spectator-view-toggle">
+          <button id="btn-view-overview" class="spec-toggle-btn active">🗺️ マップ全体俯瞰 (引き)</button>
+          <button id="btn-view-follow" class="spec-toggle-btn">🎯 プレイヤー追従</button>
+        </div>
+
+        <div class="spectator-target-info" id="spectator-target-wrapper">
+          対象: <span id="spectate-target-name">Player 2</span>
+          <div class="spectator-nav-buttons">
+            <button id="btn-spectate-prev" class="spec-nav-btn">◀ PREV</button>
+            <button id="btn-spectate-next" class="spec-nav-btn">NEXT ▶</button>
+          </div>
+        </div>
+
+        <!-- Zoom Controls -->
+        <div class="spectator-zoom-controls">
+          <button id="btn-zoom-out" class="spec-zoom-btn" title="引く（ズームアウト）">🔍−</button>
+          <span id="zoom-level-text" class="zoom-text">FIT</span>
+          <button id="btn-zoom-in" class="spec-zoom-btn" title="寄る（ズームイン）">🔍＋</button>
+          <button id="btn-zoom-reset" class="spec-zoom-btn reset-btn" title="マップ全体にフィット">📐 全体</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. RESULT SCREEN (SCOREBOARD) -->
+    <div id="result-screen" class="ui-screen">
+      <div class="result-backdrop"></div>
+      <div class="result-container">
+        <!-- Winner Banner -->
+        <div class="winner-banner">
+          <div class="trophy-icon">🏆</div>
+          <div class="winner-meta">
+            <span class="winner-sub">BATTLE ROYALE WINNER</span>
+            <h2 class="winner-name" id="winner-name-text">Player 1</h2>
+          </div>
+        </div>
+
+        <h3 class="scoreboard-title">📊 最終順位表 (FINAL RESULTS)</h3>
+
+        <!-- Scoreboard Table -->
+        <div class="scoreboard-scroll">
+          <table class="scoreboard-table">
+            <thead>
+              <tr>
+                <th>順位</th>
+                <th>プレイヤー名</th>
+                <th>戦車タイプ</th>
+                <th>キル数</th>
+                <th>生存時間</th>
+                <th>ステータス</th>
+              </tr>
+            </thead>
+            <tbody id="scoreboard-body">
+              <!-- Dynamically populated rows (1st ~ 10th) -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Rematch / Lobby Button -->
+        <div class="result-actions">
+          <div id="result-host-controls">
+            <button class="action-btn primary-btn return-lobby-btn" id="btn-return-lobby">
+              🔄 ロビーへ戻る (REMATCH)
+            </button>
+          </div>
+          <div id="result-client-msg" class="result-wait-msg">
+            ⏳ ホストがロビーへ戻すのを待機しています...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. OPTIONS MODAL -->
+    <div id="options-modal" class="modal-backdrop">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>⚙️ OPTIONS (操作・システム設定)</h3>
+          <button class="modal-close-btn" id="btn-close-options">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="option-row">
+            <label class="option-label">操作システム (Control Scheme)</label>
+            <div class="control-scheme-choices">
+              <label class="radio-card">
+                <input type="radio" name="control-mode" value="pc-mouse" checked>
+                <div class="radio-card-content">
+                  <span class="radio-title">PC: マウス + キーボード (推奨)</span>
+                  <span class="radio-desc">WASD: 移動 / マウス: 360°照準 / 左クリック: 発射</span>
+                </div>
+              </label>
+              <label class="radio-card">
+                <input type="radio" name="control-mode" value="pc-keyboard">
+                <div class="radio-card-content">
+                  <span class="radio-title">PC: フルキーボード</span>
+                  <span class="radio-desc">WASD: 移動 / J・L: 砲塔旋回 / K・Space: 発射</span>
+                </div>
+              </label>
+              <label class="radio-card">
+                <input type="radio" name="control-mode" value="mobile-touch">
+                <div class="radio-card-content">
+                  <span class="radio-title">モバイル: タッチ操作</span>
+                  <span class="radio-desc">左画面: 移動スティック / 右画面: ドラッグでエイム・離して発射</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="option-row">
+            <label class="option-label">マスター音量 (Sound Volume)</label>
+            <div class="slider-wrapper">
+              <input type="range" id="volume-slider" min="0" max="100" value="70">
+              <span id="volume-val-text">70%</span>
+            </div>
+          </div>
+
+          <div class="option-row">
+            <label class="option-label">画面揺れ演出 (Screen Shake)</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-screenshake" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="action-btn secondary-btn" id="btn-save-options">設定を閉じる</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. CONNECT GUIDE & QR MODAL -->
+    <div id="connect-modal" class="modal-backdrop">
+      <div class="modal-box connect-modal-box">
+        <div class="modal-header">
+          <h3>📱 スマホ・別回線（Wi-Fi別）からの接続ガイド</h3>
+          <button class="modal-close-btn" id="btn-close-connect">✕</button>
+        </div>
+        <div class="modal-body connect-guide-body">
+          <div class="connect-qr-wrapper">
+            <canvas id="qr-code-canvas" width="180" height="180"></canvas>
+            <p class="qr-desc">スマホのカメラでかざしてアクセス！</p>
+          </div>
+
+          <div class="connect-info-columns">
+            <!-- Case A: Same Wi-Fi -->
+            <div class="connect-card">
+              <h4>🏠 ① 同じWi-Fi（家庭内LAN）の場合</h4>
+              <p class="info-note">スマホをPCと同じWi-Fiに接続し、以下のURLを開きます：</p>
+              <div class="copy-url-row">
+                <input type="text" id="lan-url-display" readonly value="http://192.168.0.10:3000">
+                <button id="btn-copy-lan-url" class="mini-copy-btn">コピー</button>
+              </div>
+              <div class="firewall-warning">
+                ⚠️ <b>接続拒否される場合</b>：Windowsファイアウォールでポート3000の受信がブロックされています。付属の <code>open-firewall.bat</code> を管理者で実行すると解決します。
+              </div>
+            </div>
+
+            <!-- Case B: Different Wi-Fi / 4G / Internet -->
+            <div class="connect-card highlight-card">
+              <h4>🌐 ② Wi-Fiが違う場合（4G/5G・外出先・友達）</h4>
+              <p class="info-note">PCで <code>start-online.bat</code> をダブルクリックすると、インターネット経由で繋がる公開URL（HTTPS）が即時発行されます！</p>
+              <div class="copy-url-row">
+                <input type="text" id="online-url-display" readonly value="start-online.batを実行すると表示されます">
+                <button id="btn-copy-online-url" class="mini-copy-btn">コピー</button>
+              </div>
+              <p class="lock-tip">🔒 同じ「合言葉（Room Code）」を入力した人同士だけで自動マッチングします。</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="action-btn secondary-btn" id="btn-done-connect">閉じる</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. SECRET UNLOCK NOTIFICATION BANNER -->
+    <div id="secret-banner-overlay" class="secret-banner-overlay" style="display: none;">
+      <div class="secret-banner-box">
+        <div class="secret-banner-icon" id="secret-banner-icon">🎉</div>
+        <div class="secret-banner-text">
+          <h3 id="secret-banner-title">SECRET UNLOCKED!</h3>
+          <p id="secret-banner-desc">隠し戦車「ファントム」が解放されました！</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. MOBILE TOUCH OVERLAY -->
+    <div id="touch-controls" class="touch-overlay">
+      <div id="stick-move" class="virtual-stick">
+        <div class="stick-base"></div>
+        <div class="stick-knob"></div>
+        <span class="stick-label">MOVE</span>
+      </div>
+      <div id="stick-aim" class="virtual-stick">
+        <div class="stick-base"></div>
+        <div class="stick-knob"></div>
+        <span class="stick-label">🎯 エイム（離して発射）</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/qrcode.js"></script>
+  <script src="js/game-engine.js"></script>
+  <script src="js/p2p-network.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

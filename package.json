@@ -1,0 +1,21 @@
+{
+  "name": "tank-10",
+  "version": "1.0.0",
+  "description": "対戦型トップダウン戦車アクション『TANK-10』(最大20人オンラインバトルロイヤル / WebRTC P2P & WebSocket)",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "test": "node test-game-logic.js"
+  },
+  "keywords": [
+    "tank",
+    "multiplayer",
+    "battle-royale",
+    "webrtc",
+    "p2p",
+    "websocket",
+    "html5-game"
+  ],
+  "author": "Antigravity",
+  "license": "MIT"
+}
